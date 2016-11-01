@@ -1,0 +1,26 @@
+#+TITLE: projectile-git-autofetch -- automatically fetch git repositories
+
+* Overview
+
+projectile-git-autofetch is a minor mode for [[https://www.gnu.org/software/emacs][Emacs]] to automatically
+fetch repositories you are currently working on (by default, all open
+repositories known to projectile).
+
+* Installation
+
+To use this mode, add the repository to your load path, load it and
+enable the minor mode:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "~/path/to/projectile-git-autofetch/")
+(require 'projectile-git-autofetch)
+(projectile-git-autofetch-mode 1)
+#+END_SRC
+
+* Configuration
+
+For configuration options, please look at the customization group
+~projectile-git-autofetch~. In particular,
+~projectile-git-autofetch-projects~ lets you define, which
+repositories to fetch (all repositories known to projectile, all open
+repositories or only the repository for the current buffer).
