@@ -1,21 +1,39 @@
-;;; projectile-git-autofetch.el --- automatcally fetch git repositories
+;;; projectile-git-autofetch.el --- automatically fetch git repositories
 
-;; This software may be freely used under GNU GPL conditions.
+;; Copyright (C) 2016  Andreas Müller
 
 ;; Author: Andreas Müller <code@0x7.ch>
+;; Keywords: tools, vc
 ;; Version: 0.1.0
 ;; URL: https://github.com/andrmuel/projectile-git-autofetch
 ;; Package-Requires: ((projectile "0.14.0") (async "1.9") (alert "1.2"))
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
 ;; projectile-git-autofetch can be used to periodically fetch git
-;; repositories. Depending on the value of
+;; repositories.  Depending on the value of
 ;; projectile-git-autofetch-projects, only the repository for the
 ;; current buffer, all open projects or all projects known to
 ;; projectile are fetched.
 
 ;;; Code:
+
+(require 'projectile)
+(require 'async)
+(require 'alert)
 
 (defgroup projectile-git-autofetch nil
   "Automatically fetch git repositories."
@@ -63,6 +81,7 @@ Selection of projects that should be automatically fetched."
   :type 'integer)
 
 (defun projectile-git-autofetch-run ()
+  "Fetch all repositories and notify user."
   (let ((projects))
     (cond
      ((eq projectile-git-autofetch-projects 'current)
@@ -86,6 +105,7 @@ Selection of projects that should be automatically fetched."
 			  ':title (format "projectile-git-autofetch: %s" (projectile-project-name)))))))))))
 
 (defun projectile-git-autofetch-setup ()
+  "Set up timers to periodically fetch repositories."
   (interactive)
   (if (not (and (boundp 'projectile-git-autofetch-timer) (timerp projectile-git-autofetch-timer)))
       (defvar projectile-git-autofetch-timer
@@ -95,8 +115,10 @@ Selection of projects that should be automatically fetched."
 	 'projectile-git-autofetch-run))))
 
 (defun projectile-git-autofetch-stop ()
+  "Stop auto fetch timers."
   (interactive)
   (cancel-timer projectile-git-autofetch-timer)
   (makunbound 'projectile-git-autofetch-timer))
 
 (provide 'projectile-git-autofetch)
+;;; projectile-git-autofetch.el ends here
