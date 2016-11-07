@@ -92,7 +92,9 @@ Selection of projects that should be automatically fetched."
     (dolist (project projects)
       (let ((default-directory project))
 	(when (and (file-directory-p ".git")
-		   (> (length (shell-command-to-string "git config --get remote.origin.url")) 0))
+		   (car (ignore-errors
+			  (process-lines "git" "config" "--get"
+					 "remote.origin.url"))))
 	  (async-start
 	   (lambda () (shell-command-to-string "git fetch"))
 	   (lambda (git-output)
