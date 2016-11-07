@@ -6,7 +6,7 @@
 ;; Keywords: tools, vc
 ;; Version: 0.1.0
 ;; URL: https://github.com/andrmuel/projectile-git-autofetch
-;; Package-Requires: ((projectile "0.14.0") (async "1.9") (alert "1.2"))
+;; Package-Requires: ((projectile "0.14.0") (alert "1.2"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 ;;; Code:
 
 (require 'projectile)
-(require 'async)
 (require 'alert)
 
 (defgroup projectile-git-autofetch nil
@@ -79,6 +78,20 @@ Selection of projects that should be automatically fetched."
   :group 'projectile-git-autofetch
   :type 'integer)
 
+(defun projectile-git-autofetch-sentinel (process _)
+  "Handle the state of PROCESS."
+  (unless (process-live-p process)
+    (let ((buffer (process-buffer process))
+	  (default-directory (process-get process 'projectile-project)))
+      (with-current-buffer buffer
+	(when (and (> (buffer-size) 0)
+		   projectile-git-autofetch-notify)
+	  (alert (buffer-string)
+		 ':title (format "projectile-git-autofetch: %s"
+				 (projectile-project-name)))))
+      (delete-process process)
+      (kill-buffer buffer))))
+
 (defun projectile-git-autofetch-run ()
   "Fetch all repositories and notify user."
   (let ((projects (cond
@@ -93,15 +106,11 @@ Selection of projects that should be automatically fetched."
       (let ((default-directory project))
 	(when (and (file-directory-p ".git")
 		   (car (ignore-errors
-			  (process-lines "git" "config" "--get"
-					 "remote.origin.url"))))
-	  (async-start
-	   (lambda () (shell-command-to-string "git fetch"))
-	   (lambda (git-output)
-	     (when (and (> (length git-output) 0)
-			projectile-git-autofetch-notify)
-	       (alert git-output
-		      ':title (format "projectile-git-autofetch: %s" (projectile-project-name)))))))))))
+			  (process-lines "git" "config" "--get" "remote.origin.url"))))
+	  (let* ((buffer (generate-new-buffer " *git-fetch"))
+		 (process (start-process "git-fetch" buffer "git" "fetch")))
+	    (process-put process 'projectile-project project)
+	    (set-process-sentinel process #'projectile-git-autofetch-sentinel)))))))
 
 (defvar projectile-git-autofetch-timer nil
   "Timer object for git fetches.")
