@@ -91,15 +91,15 @@ Selection of projects that should be automatically fetched."
 		   (t nil))))
     (dolist (project projects)
       (let ((default-directory project))
-	(if (and (file-directory-p ".git")
-		 (> (length (shell-command-to-string "git config --get remote.origin.url")) 0))
-	    (async-start
-	     (lambda () (shell-command-to-string "git fetch"))
-	     (lambda (git-output)
-	       (if (and (> (length git-output) 0)
+	(when (and (file-directory-p ".git")
+		   (> (length (shell-command-to-string "git config --get remote.origin.url")) 0))
+	  (async-start
+	   (lambda () (shell-command-to-string "git fetch"))
+	   (lambda (git-output)
+	     (when (and (> (length git-output) 0)
 			projectile-git-autofetch-notify)
-		   (alert git-output
-			  ':title (format "projectile-git-autofetch: %s" (projectile-project-name)))))))))))
+	       (alert git-output
+		      ':title (format "projectile-git-autofetch: %s" (projectile-project-name)))))))))))
 
 (defvar projectile-git-autofetch-timer nil
   "Timer object for git fetches.")
