@@ -81,16 +81,14 @@ Selection of projects that should be automatically fetched."
 
 (defun projectile-git-autofetch-run ()
   "Fetch all repositories and notify user."
-  (let ((projects))
-    (cond
-     ((eq projectile-git-autofetch-projects 'current)
-      (setq projects (list (projectile-project-root))))
-     ((eq projectile-git-autofetch-projects 'open)
-      (setq projects (projectile-open-projects)))
-     ((eq projectile-git-autofetch-projects 'all)
-      (setq projects projectile-known-projects))
-     (t
-      (setq projects '())))
+  (let ((projects (cond
+		   ((eq projectile-git-autofetch-projects 'current)
+		    (list (projectile-project-root)))
+		   ((eq projectile-git-autofetch-projects 'open)
+		    (projectile-open-projects))
+		   ((eq projectile-git-autofetch-projects 'all)
+		    projectile-known-projects)
+		   (t nil))))
     (dolist (project projects)
       (let ((default-directory project))
 	(if (and (file-directory-p ".git")
