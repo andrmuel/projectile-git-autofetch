@@ -101,21 +101,24 @@ Selection of projects that should be automatically fetched."
 		   (alert git-output
 			  ':title (format "projectile-git-autofetch: %s" (projectile-project-name)))))))))))
 
+(defvar projectile-git-autofetch-timer nil
+  "Timer object for git fetches.")
+
 (defun projectile-git-autofetch-setup ()
   "Set up timers to periodically fetch repositories."
   (interactive)
-  (if (not (and (boundp 'projectile-git-autofetch-timer) (timerp projectile-git-autofetch-timer)))
-      (defvar projectile-git-autofetch-timer
-	(run-with-timer
-	 projectile-git-autofetch-initial-delay
-	 projectile-git-autofetch-interval
-	 'projectile-git-autofetch-run))))
+  (unless (timerp projectile-git-autofetch-timer)
+    (setq projectile-git-autofetch-timer
+	  (run-with-timer
+	   projectile-git-autofetch-initial-delay
+	   projectile-git-autofetch-interval
+	   'projectile-git-autofetch-run))))
 
 (defun projectile-git-autofetch-stop ()
   "Stop auto fetch timers."
   (interactive)
   (cancel-timer projectile-git-autofetch-timer)
-  (makunbound 'projectile-git-autofetch-timer))
+  (setq projectile-git-autofetch-timer nil))
 
 (provide 'projectile-git-autofetch)
 ;;; projectile-git-autofetch.el ends here
