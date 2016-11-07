@@ -1,4 +1,4 @@
-;;; projectile-git-autofetch.el --- automatically fetch git repositories
+;;; projectile-git-autofetch.el --- automatically fetch git repositories  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  Andreas Müller
 
