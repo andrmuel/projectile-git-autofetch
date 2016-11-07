@@ -1,4 +1,4 @@
-;;; projectile-git-autofetch.el --- automatically fetch git repositories
+;;; projectile-git-autofetch.el --- automatically fetch git repositories  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  Andreas Müller
 
@@ -6,7 +6,7 @@
 ;; Keywords: tools, vc
 ;; Version: 0.1.0
 ;; URL: https://github.com/andrmuel/projectile-git-autofetch
-;; Package-Requires: ((projectile "0.14.0") (async "1.9") (alert "1.2"))
+;; Package-Requires: ((projectile "0.14.0") (alert "1.2"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 ;;; Code:
 
 (require 'projectile)
-(require 'async)
 (require 'alert)
 
 (defgroup projectile-git-autofetch nil
@@ -40,7 +39,6 @@
   :group 'tools)
 
 (define-minor-mode projectile-git-autofetch-mode
-
   "Fetch git repositories periodically."
   :init-value nil
   :group 'projectile-git-autofetch
@@ -80,45 +78,58 @@ Selection of projects that should be automatically fetched."
   :group 'projectile-git-autofetch
   :type 'integer)
 
+(defun projectile-git-autofetch-sentinel (process _)
+  "Handle the state of PROCESS."
+  (unless (process-live-p process)
+    (let ((buffer (process-buffer process))
+	  (default-directory (process-get process 'projectile-project)))
+      (with-current-buffer buffer
+	(when (and (> (buffer-size) 0)
+		   projectile-git-autofetch-notify)
+	  (alert (buffer-string)
+		 ':title (format "projectile-git-autofetch: %s"
+				 (projectile-project-name)))))
+      (delete-process process)
+      (kill-buffer buffer))))
+
 (defun projectile-git-autofetch-run ()
   "Fetch all repositories and notify user."
-  (let ((projects))
-    (cond
-     ((eq projectile-git-autofetch-projects 'current)
-      (setq projects (list (projectile-project-root))))
-     ((eq projectile-git-autofetch-projects 'open)
-      (setq projects (projectile-open-projects)))
-     ((eq projectile-git-autofetch-projects 'all)
-      (setq projects projectile-known-projects))
-     (t
-      (setq projects '())))
+  (let ((projects (cond
+		   ((eq projectile-git-autofetch-projects 'current)
+		    (list (projectile-project-root)))
+		   ((eq projectile-git-autofetch-projects 'open)
+		    (projectile-open-projects))
+		   ((eq projectile-git-autofetch-projects 'all)
+		    projectile-known-projects)
+		   (t nil))))
     (dolist (project projects)
       (let ((default-directory project))
-	(if (and (file-directory-p ".git")
-		 (> (length (shell-command-to-string "git config --get remote.origin.url")) 0))
-	    (async-start
-	     (lambda () (shell-command-to-string "git fetch"))
-	     (lambda (git-output)
-	       (if (and (> (length git-output) 0)
-			projectile-git-autofetch-notify)
-		   (alert git-output
-			  ':title (format "projectile-git-autofetch: %s" (projectile-project-name)))))))))))
+	(when (and (file-directory-p ".git")
+		   (car (ignore-errors
+			  (process-lines "git" "config" "--get" "remote.origin.url"))))
+	  (let* ((buffer (generate-new-buffer " *git-fetch"))
+		 (process (start-process "git-fetch" buffer "git" "fetch")))
+	    (process-put process 'projectile-project project)
+	    (set-process-sentinel process #'projectile-git-autofetch-sentinel)))))))
+
+(defvar projectile-git-autofetch-timer nil
+  "Timer object for git fetches.")
 
 (defun projectile-git-autofetch-setup ()
   "Set up timers to periodically fetch repositories."
   (interactive)
-  (if (not (and (boundp 'projectile-git-autofetch-timer) (timerp projectile-git-autofetch-timer)))
-      (defvar projectile-git-autofetch-timer
-	(run-with-timer
-	 projectile-git-autofetch-initial-delay
-	 projectile-git-autofetch-interval
-	 'projectile-git-autofetch-run))))
+  (unless (timerp projectile-git-autofetch-timer)
+    (setq projectile-git-autofetch-timer
+	  (run-with-timer
+	   projectile-git-autofetch-initial-delay
+	   projectile-git-autofetch-interval
+	   'projectile-git-autofetch-run))))
 
 (defun projectile-git-autofetch-stop ()
   "Stop auto fetch timers."
   (interactive)
   (cancel-timer projectile-git-autofetch-timer)
-  (makunbound 'projectile-git-autofetch-timer))
+  (setq projectile-git-autofetch-timer nil))
 
 (provide 'projectile-git-autofetch)
 ;;; projectile-git-autofetch.el ends here
