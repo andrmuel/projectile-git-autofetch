@@ -40,7 +40,6 @@
   :group 'tools)
 
 (define-minor-mode projectile-git-autofetch-mode
-
   "Fetch git repositories periodically."
   :init-value nil
   :group 'projectile-git-autofetch
