@@ -38,6 +38,7 @@
   "Automatically fetch git repositories."
   :group 'tools)
 
+;;;###autoload
 (define-minor-mode projectile-git-autofetch-mode
   "Fetch git repositories periodically."
   :init-value nil
