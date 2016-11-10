@@ -1,5 +1,9 @@
 #+TITLE: projectile-git-autofetch -- automatically fetch git repositories
 
+[[https://www.gnu.org/licenses/gpl-3.0.txt][https://img.shields.io/badge/license-GPL_3-green.svg]]
+[[https://melpa.org/#/projectile-git-autofetch][https://melpa.org/packages/projectile-git-autofetch-badge.svg]]
+[[https://stable.melpa.org/#/projectile-git-autofetch][https://stable.melpa.org/packages/projectile-git-autofetch-badge.svg]]
+
 * Overview
 
 projectile-git-autofetch is a minor mode for [[https://www.gnu.org/software/emacs][Emacs]] to automatically
