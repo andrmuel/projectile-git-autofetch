@@ -111,6 +111,7 @@ Selection of projects that should be automatically fetched."
 	  (let* ((buffer (generate-new-buffer " *git-fetch"))
 		 (process (start-process "git-fetch" buffer "git" "fetch")))
 	    (process-put process 'projectile-project project)
+	    (set-process-query-on-exit-flag process nil)
 	    (set-process-sentinel process #'projectile-git-autofetch-sentinel)))))))
 
 (defvar projectile-git-autofetch-timer nil
