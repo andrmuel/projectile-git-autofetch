@@ -57,9 +57,9 @@ Selection of projects that should be automatically fetched."
   :group 'projectile-git-autofetch
   :safe (lambda (val) (memq val '(current open all)))
   :type '(choice (const current :tag "Project for current buffer only.")
-		 (const open    :tag "All open projects.")
-		 (const all     :tag "All known projects.")
-		 (const nil     :tag "Nothing.")))
+                 (const open    :tag "All open projects.")
+                 (const all     :tag "All known projects.")
+                 (const nil     :tag "Nothing.")))
 
 (defcustom projectile-git-autofetch-notify t
   "Whether to notify in case of new commits."
@@ -83,36 +83,36 @@ Selection of projects that should be automatically fetched."
   "Handle the state of PROCESS."
   (unless (process-live-p process)
     (let ((buffer (process-buffer process))
-	  (default-directory (process-get process 'projectile-project)))
+          (default-directory (process-get process 'projectile-project)))
       (with-current-buffer buffer
-	(when (and (> (buffer-size) 0)
-		   projectile-git-autofetch-notify)
-	  (alert (buffer-string)
-		 ':title (format "projectile-git-autofetch: %s"
-				 (projectile-project-name)))))
+        (when (and (> (buffer-size) 0)
+                   projectile-git-autofetch-notify)
+          (alert (buffer-string)
+                 ':title (format "projectile-git-autofetch: %s"
+                                 (projectile-project-name)))))
       (delete-process process)
       (kill-buffer buffer))))
 
 (defun projectile-git-autofetch-run ()
   "Fetch all repositories and notify user."
   (let ((projects (cond
-		   ((eq projectile-git-autofetch-projects 'current)
-		    (list (projectile-project-root)))
-		   ((eq projectile-git-autofetch-projects 'open)
-		    (projectile-open-projects))
-		   ((eq projectile-git-autofetch-projects 'all)
-		    projectile-known-projects)
-		   (t nil))))
+                   ((eq projectile-git-autofetch-projects 'current)
+                    (list (projectile-project-root)))
+                   ((eq projectile-git-autofetch-projects 'open)
+                    (projectile-open-projects))
+                   ((eq projectile-git-autofetch-projects 'all)
+                    projectile-known-projects)
+                   (t nil))))
     (dolist (project projects)
       (let ((default-directory project))
-	(when (and (file-directory-p ".git")
-		   (car (ignore-errors
-			  (process-lines "git" "config" "--get" "remote.origin.url"))))
-	  (let* ((buffer (generate-new-buffer " *git-fetch"))
-		 (process (start-process "git-fetch" buffer "git" "fetch")))
-	    (process-put process 'projectile-project project)
-	    (set-process-query-on-exit-flag process nil)
-	    (set-process-sentinel process #'projectile-git-autofetch-sentinel)))))))
+        (when (and (file-directory-p ".git")
+                   (car (ignore-errors
+                          (process-lines "git" "config" "--get" "remote.origin.url"))))
+          (let* ((buffer (generate-new-buffer " *git-fetch"))
+                 (process (start-process "git-fetch" buffer "git" "fetch")))
+            (process-put process 'projectile-project project)
+            (set-process-query-on-exit-flag process nil)
+            (set-process-sentinel process #'projectile-git-autofetch-sentinel)))))))
 
 (defvar projectile-git-autofetch-timer nil
   "Timer object for git fetches.")
@@ -122,10 +122,10 @@ Selection of projects that should be automatically fetched."
   (interactive)
   (unless (timerp projectile-git-autofetch-timer)
     (setq projectile-git-autofetch-timer
-	  (run-with-timer
-	   projectile-git-autofetch-initial-delay
-	   projectile-git-autofetch-interval
-	   'projectile-git-autofetch-run))))
+          (run-with-timer
+           projectile-git-autofetch-initial-delay
+           projectile-git-autofetch-interval
+           'projectile-git-autofetch-run))))
 
 (defun projectile-git-autofetch-stop ()
   "Stop auto fetch timers."
