@@ -79,6 +79,12 @@ Selection of projects that should be automatically fetched."
   :group 'projectile-git-autofetch
   :type 'integer)
 
+(defcustom projectile-git-autofetch-timeout nil
+  "Timeout in seconds for git processes or nil to disable."
+  :package-version '(projectile-git-autofetch . "0.1.1")
+  :group 'projectile-git-autofetch
+  :type 'integer)
+
 (defun projectile-git-autofetch-sentinel (process _)
   "Handle the state of PROCESS."
   (unless (process-live-p process)
@@ -112,7 +118,13 @@ Selection of projects that should be automatically fetched."
                  (process (start-process "git-fetch" buffer "git" "fetch")))
             (process-put process 'projectile-project project)
             (set-process-query-on-exit-flag process nil)
-            (set-process-sentinel process #'projectile-git-autofetch-sentinel)))))))
+            (set-process-sentinel process #'projectile-git-autofetch-sentinel)
+            (when projectile-git-autofetch-timeout
+              (add-timeout projectile-git-autofetch-timeout 'projectile-git-autofetch-timeout-handler process))))))))
+
+(defun projectile-git-autofetch-timeout-handler (process)
+  "Timeout handler to kill slow or blocked processes."
+  (delete-process process))
 
 (defvar projectile-git-autofetch-timer nil
   "Timer object for git fetches.")
