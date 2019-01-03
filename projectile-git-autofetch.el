@@ -112,7 +112,8 @@ disable."
       (make-process :name "projectile-git-autofetch-ping"
                     :buffer "*projectile-git-autofetch-ping"
                     :command `("ping" "-c" "1" "-W" "3" ,projectile-git-autofetch-ping-host)
-                    :sentinel 'projectile-git-autofetch--ping-sentinel)
+                    :sentinel 'projectile-git-autofetch--ping-sentinel
+                    :noquery t)
       (projectile-git-autofetch--work)))
 
 (defun projectile-git-autofetch--ping-sentinel (process event)
