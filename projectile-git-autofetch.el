@@ -124,6 +124,29 @@ disable."
       (delete-process process)
       (kill-buffer buffer))))
 
+
+;; Fill the buffer in the same way as it would be shown in bash
+;; taken from https://stackoverflow.com/questions/19407278/emacs-overwrite-with-carriage-return
+(defun shelllike-filter (proc string)
+  (let* ((buffer (process-buffer proc))
+         (window (get-buffer-window buffer)))
+    (with-current-buffer buffer
+      (if (not (mark)) (push-mark))
+      (exchange-point-and-mark) ;Use the mark to represent the cursor location
+      (dolist (char (append string nil))
+    (cond ((char-equal char ?\r)
+           (move-beginning-of-line 1))
+          ((char-equal char ?\n)
+           (move-end-of-line 1) (newline))
+          (t
+           (if (/= (point) (point-max)) ;Overwrite character
+           (delete-char 1))
+           (insert char))))
+      (exchange-point-and-mark))
+    (if window
+      (with-selected-window window
+        (goto-char (point-max))))))
+
 (defun projectile-git-autofetch--work ()
   (let ((projects (cond
                    ((eq projectile-git-autofetch-projects 'current)
@@ -141,6 +164,7 @@ disable."
           (let* ((buffer (generate-new-buffer " *git-fetch"))
                  (process (start-process "git-fetch" buffer "git" "fetch")))
             (process-put process 'projectile-project project)
+            (set-process-filter process 'shelllike-filter)
             (set-process-query-on-exit-flag process nil)
             (set-process-sentinel process #'projectile-git-autofetch-sentinel)
             (when projectile-git-autofetch-timeout
