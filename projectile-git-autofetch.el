@@ -92,6 +92,18 @@ disable."
   :group 'projectile-git-autofetch
   :type 'string)
 
+(defcustom projectile-git-autofetch-fetch-args '("--no-progress")
+  "Additional arguments for git fetch."
+  :package-version '(projectile-git-autofetch . "0.1.2")
+  :group 'projectile-git-autofetch
+  :type '(repeat string))
+
+(defcustom projectile-git-autofetch-process-filter nil
+  "Optional filter for fetch process."
+  :package-version '(projectile-git-autofetch . "0.1.2")
+  :group 'projectile-git-autofetch
+  :type '(choice function (const nil)))
+
 (defun projectile-git-autofetch-sentinel (process _)
   "Handle the state of PROCESS."
   (unless (process-live-p process)
@@ -139,8 +151,10 @@ disable."
                    (car (ignore-errors
                           (process-lines "git" "config" "--get" "remote.origin.url"))))
           (let* ((buffer (generate-new-buffer " *git-fetch"))
-                 (process (start-process "git-fetch" buffer "git" "fetch")))
+                 (process (apply #'start-process "git-fetch" buffer "git" "fetch" projectile-git-autofetch-fetch-args)))
             (process-put process 'projectile-project project)
+            (when projectile-git-autofetch-process-filter
+              (set-process-filter process projectile-git-autofetch-process-filter))
             (set-process-query-on-exit-flag process nil)
             (set-process-sentinel process #'projectile-git-autofetch-sentinel)
             (when projectile-git-autofetch-timeout
