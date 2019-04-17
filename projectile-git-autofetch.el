@@ -6,7 +6,7 @@
 ;; Keywords: tools, vc
 ;; Version: 0.1.0
 ;; URL: https://github.com/andrmuel/projectile-git-autofetch
-;; Package-Requires: ((projectile "0.14.0") (alert "1.2"))
+;; Package-Requires: ((emacs "25.1") (projectile "0.14.0") (alert "1.2"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@
   "Fetch git repositories periodically."
   :init-value nil
   :group 'projectile-git-autofetch
+  :require 'projectile-git-autofetch
   :global t
   :lighter " git-af"
   (if projectile-git-autofetch-mode
@@ -86,8 +87,7 @@ Selection of projects that should be automatically fetched."
   :type 'integer)
 
 (defcustom projectile-git-autofetch-ping-host nil
-  "Host to ping on order to check for Internet connectivity or nil to
-disable."
+  "Host to ping on order to check for Internet connectivity or nil to disable."
   :package-version '(projectile-git-autofetch . "0.1.2")
   :group 'projectile-git-autofetch
   :type 'string)
@@ -129,6 +129,7 @@ disable."
       (projectile-git-autofetch--work)))
 
 (defun projectile-git-autofetch--ping-sentinel (process event)
+  "Sentinel function for PROCESS to check ping success given EVENT."
   (when (string= "finished\n" event)
     (projectile-git-autofetch--work))
   (let ((buffer (process-buffer process)))
@@ -137,6 +138,7 @@ disable."
       (kill-buffer buffer))))
 
 (defun projectile-git-autofetch--work ()
+  "Worker function to fetch all repositories."
   (let ((projects (cond
                    ((eq projectile-git-autofetch-projects 'current)
                     (list (projectile-project-root)))
@@ -151,7 +153,8 @@ disable."
                    (car (ignore-errors
                           (process-lines "git" "config" "--get" "remote.origin.url"))))
           (let* ((buffer (generate-new-buffer " *git-fetch"))
-                 (process (apply #'start-process "git-fetch" buffer "git" "fetch" projectile-git-autofetch-fetch-args)))
+                 (process
+                  (apply #'start-process "git-fetch" buffer "git" "fetch" projectile-git-autofetch-fetch-args)))
             (process-put process 'projectile-project project)
             (when projectile-git-autofetch-process-filter
               (set-process-filter process projectile-git-autofetch-process-filter))
@@ -161,7 +164,7 @@ disable."
               (add-timeout projectile-git-autofetch-timeout 'projectile-git-autofetch-timeout-handler process))))))))
 
 (defun projectile-git-autofetch-timeout-handler (process)
-  "Timeout handler to kill slow or blocked processes."
+  "Timeout handler to kill slow or blocked PROCESS."
   (delete-process process))
 
 (defvar projectile-git-autofetch-timer nil
