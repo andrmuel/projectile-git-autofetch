@@ -104,17 +104,37 @@ Selection of projects that should be automatically fetched."
   :group 'projectile-git-autofetch
   :type '(choice function (const nil)))
 
+(defcustom projectile-git-autofetch-after-fetch-hook nil
+  "Hooks to run after fetching a repository.
+Note: runs in the git fetch buffer, so you can use projectile
+functions like `projectile-project-root` to determine project
+parameters."
+  :group 'projectile-git-autofetch
+  :type 'hook)
+
+(defcustom projectile-git-autofetch-after-successful-fetch-hook nil
+  "Hooks to run after sucessfully fetching a repository.
+In contrast to `projectile-git-autofetch-after-fetch-hook`, these
+hooks only run when new git objects were fetched.
+Note: runs in the git fetch buffer, so you can use projectile
+functions like `projectile-project-root` to determine project
+parameters."
+  :group 'projectile-git-autofetch
+  :type 'hook)
+
 (defun projectile-git-autofetch-sentinel (process _)
   "Handle the state of PROCESS."
   (unless (process-live-p process)
     (let ((buffer (process-buffer process))
           (default-directory (process-get process 'projectile-project)))
       (with-current-buffer buffer
-        (when (and (> (buffer-size) 0)
-                   projectile-git-autofetch-notify)
-          (alert (buffer-string)
-                 ':title (format "projectile-git-autofetch: %s"
-                                 (projectile-project-name)))))
+        (run-hooks 'projectile-git-autofetch-after-fetch-hook)
+        (when (> (buffer-size) 0)
+          (run-hooks 'projectile-git-autofetch-after-successful-fetch-hook)
+          (when projectile-git-autofetch-notify
+            (alert (buffer-string)
+                   ':title (format "projectile-git-autofetch: %s"
+                                   (projectile-project-name))))))
       (delete-process process)
       (kill-buffer buffer))))
 
